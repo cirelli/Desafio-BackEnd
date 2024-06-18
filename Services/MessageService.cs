@@ -15,10 +15,10 @@ public class MessageService(IRepositoryWrapper RepositoryWrapper)
 
         if (value is null)
         {
-            return NotFound<TEntity>();
+            return NotFound();
         }
 
-        return new SuccessServiceResult<TEntity>(value);
+        return Success(value);
     }
 
     public async Task<ServiceResult<List<TEntity>>> GetAllAsync(Pagination pagination,
@@ -28,6 +28,6 @@ public class MessageService(IRepositoryWrapper RepositoryWrapper)
 
         List<TEntity> values = await Repository.GetAllAsync(pagination, cancellationToken);
 
-        return new SuccessServiceResult<List<TEntity>>(values);
+        return Success(values);
     }
 }

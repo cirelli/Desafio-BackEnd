@@ -1,17 +1,22 @@
 ﻿namespace Domain.ServiceResults;
 
-public interface ISuccessServiceResult
+
+public interface IValuedSuccessServiceResult
 {
-    public object? Value { get; }
+    object? Value { get; }
 }
 
-public record SuccessServiceResult()
-    : ServiceResult;
-
-public record SuccessServiceResult<T>(T? Value)
-    : ServiceResult<T>(Value),
-      ISuccessServiceResult
-    where T : class
+public record SuccessServiceResult
+    : ServiceResult
 {
-    object? ISuccessServiceResult.Value { get => Value; }
+    public override bool IsSuccess { get; init; } = true;
+}
+
+public record SuccessServiceResult<T>(T Value)
+    : ServiceResult<T>(Value),
+    IValuedSuccessServiceResult
+{
+    public override bool IsSuccess { get; init; } = true;
+
+    object? IValuedSuccessServiceResult.Value => Value;
 }

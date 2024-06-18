@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Service = Services.RentPlanService;
+﻿using Service = Services.RentPlanService;
 using ViewModel = Domain.Dtos.RentPlanViewModel;
 
 namespace Api.Controllers;
@@ -7,7 +6,8 @@ namespace Api.Controllers;
 [ApiVersion("1")]
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
-public class RentPlanController(IMapper mapper) : BaseController
+public class RentPlanController(IMapper mapper)
+    : BaseController
 {
     [Authorize(Roles = "Admin, Driver")]
     [HttpGet]
@@ -15,7 +15,7 @@ public class RentPlanController(IMapper mapper) : BaseController
                                                             [FromQuery] Pagination pagination,
                                                             CancellationToken cancellationToken)
     {
-        ServiceResult result = await rentPlanService.GetAllAsync<ViewModel>(pagination, cancellationToken);
+        var result = await rentPlanService.GetAllAsync<ViewModel>(pagination, cancellationToken);
         return HandleServiceResult(result);
     }
 
@@ -25,7 +25,7 @@ public class RentPlanController(IMapper mapper) : BaseController
                                                        Guid id,
                                                        CancellationToken cancellationToken)
     {
-        ServiceResult result = await rentPlanService.GetByIdAsync<ViewModel>(id, cancellationToken);
+        var result = await rentPlanService.GetByIdAsync<ViewModel>(id, cancellationToken);
         return HandleServiceResult(result);
     }
 
@@ -40,14 +40,14 @@ public class RentPlanController(IMapper mapper) : BaseController
             return BadRequest("Rent Plan is null");
         }
 
-        ServiceResult result = await rentPlanService.CreateAsync(rentPlan, cancellationToken);
+        var result = await rentPlanService.CreateAsync(rentPlan, cancellationToken);
 
-        if (result is SuccessServiceResult<RentPlan> successResult)
+        if (result.IsSuccess)
         {
-            result = new CreatedServiceResult<RentPlan>("RentPlanById", successResult);
+            return CreatedAtRoute<ViewModel>(mapper, "RentPlanById", result.Value!);
         }
 
-        return HandleServiceResult<ViewModel>(mapper, result);
+        return HandleServiceResult(result);
     }
 
     [Authorize(Roles = "Admin")]
@@ -56,7 +56,7 @@ public class RentPlanController(IMapper mapper) : BaseController
                                             Guid id,
                                             CancellationToken cancellationToken)
     {
-        ServiceResult result = await rentPlanService.DeleteAsync(id, cancellationToken);
+        var result = await rentPlanService.DeleteAsync(id, cancellationToken);
         return HandleServiceResult(result);
     }
 }

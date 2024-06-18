@@ -20,10 +20,10 @@ public class RentService(IRepositoryWrapper RepositoryWrapper,
 
         if (value is null)
         {
-            return NotFound<TModel>();
+            return NotFound();
         }
 
-        return new SuccessServiceResult<TModel>(value);
+        return Success(value);
     }
 
     public async Task<ServiceResult<List<TModel>>> GetAllAsync<TModel>(Pagination pagination,
@@ -34,7 +34,7 @@ public class RentService(IRepositoryWrapper RepositoryWrapper,
 
         List<TModel> values = await Repository.GetAllAsync<TModel>(pagination, cancellationToken);
 
-        return new SuccessServiceResult<List<TModel>>(values);
+        return Success(values);
     }
 
     public async Task<ServiceResult<TEntity>> CreateAsync(Guid userId,
@@ -44,31 +44,31 @@ public class RentService(IRepositoryWrapper RepositoryWrapper,
         Guid? driverId = await RepositoryWrapper.User.GetDriverIdAsync(userId, cancellationToken);
         if (driverId is null || driverId == Guid.Empty)
         {
-            return new ForbiddenServiceResult<TEntity>();
+            return Forbidden();
         }
 
         ValidationResult validationResult = await dtoValidator.ValidateAsync(dto, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return new FluentValidationErrorServiceResult<TEntity>(validationResult);
+            return ValidationError(validationResult);
         }
 
         RentPlan? rentPlan = await RepositoryWrapper.RentPlan.GetByIdAsync(dto.RentPlanId, cancellationToken);
         if (rentPlan is null)
         {
-            return new ValidationErrorServiceResult<TEntity>(nameof(dto.RentPlanId), "Invalid!");
+            return ValidationError(nameof(dto.RentPlanId), "Invalid!");
         }
 
         ECnhType cnhType = await RepositoryWrapper.Driver.GetCnhTypeAsync(driverId.Value, cancellationToken);
         if (!cnhType.HasFlag(ECnhType.A))
         {
-            return new InvalidServiceResult<TEntity>("Driver does not have the required type of license");
+            return Invalid("Driver does not have the required type of license");
         }
 
         Guid? motorbikeId = await RepositoryWrapper.Motorbike.GetAvailableIdAsync(cancellationToken);
         if (motorbikeId == Guid.Empty)
         {
-            return new ConflictServiceResult<TEntity>("There are no motorbikes available!");
+            return Conflict("There are no motorbikes available!");
         }
 
         TEntity entity = new()
@@ -84,18 +84,18 @@ public class RentService(IRepositoryWrapper RepositoryWrapper,
         Repository.Create(entity);
         await RepositoryWrapper.SaveAsync(cancellationToken);
 
-        return new SuccessServiceResult<TEntity>(entity);
+        return Success(entity);
     }
 
-    public async Task<ServiceResult> SetEndDateAsync(Guid userId,
-                                         Guid id,
-                                         RentPatchDTO dto,
-                                         CancellationToken cancellationToken)
+    public async Task<ServiceResult<RentViewModel>> SetEndDateAsync(Guid userId,
+                                                                    Guid id,
+                                                                    RentPatchDTO dto,
+                                                                    CancellationToken cancellationToken)
     {
         Guid? driverId = await RepositoryWrapper.User.GetDriverIdAsync(userId, cancellationToken);
         if (driverId is null || driverId == Guid.Empty)
         {
-            return new ForbiddenServiceResult<TEntity>();
+            return Forbidden();
         }
 
         var rent = await Repository.GetByIdAsync(id, cancellationToken);
@@ -117,7 +117,7 @@ public class RentService(IRepositoryWrapper RepositoryWrapper,
         await RepositoryWrapper.SaveAsync(cancellationToken);
 
         var value = mapper.Map<RentViewModel>(rent);
-        return new SuccessServiceResult<RentViewModel>(value);
+        return Success(value);
     }
 
     public async Task<ServiceResult> DeleteAsync(Guid id,
@@ -130,7 +130,7 @@ public class RentService(IRepositoryWrapper RepositoryWrapper,
 
         await Repository.DeleteAsync(id, cancellationToken);
 
-        return new SuccessServiceResult();
+        return Success();
     }
 
     private static decimal CalculatePrice(RentPlan rentPlan)

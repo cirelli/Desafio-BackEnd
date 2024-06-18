@@ -1,11 +1,9 @@
 ﻿namespace Services.Results;
 
-internal record FluentInvalidServiceResult(ValidationResult ValidationResult)
-    : FluentValidationErrorServiceResult<object>(ValidationResult);
-
-internal record FluentValidationErrorServiceResult<T> : ValidationErrorServiceResult<T> where T : class
+internal record FluentInvalidServiceResult
+    : ValidationErrorServiceResult
 {
-    public FluentValidationErrorServiceResult(ValidationResult validationResult)
+    public FluentInvalidServiceResult(ValidationResult validationResult)
         : base([])
         => Errors = validationResult.Errors.ConvertAll(q => KeyValuePair.Create(q.PropertyName, q.ErrorMessage));
 }

@@ -23,10 +23,10 @@ public class OrderService(IRepositoryWrapper RepositoryWrapper,
 
         if (value is null)
         {
-            return NotFound<TModel>();
+            return NotFound();
         }
 
-        return new SuccessServiceResult<TModel>(value);
+        return Success(value);
     }
 
     public async Task<ServiceResult<List<TModel>>> GetAllAsync<TModel>(Pagination pagination,
@@ -37,7 +37,7 @@ public class OrderService(IRepositoryWrapper RepositoryWrapper,
 
         List<TModel> values = await Repository.GetAllAsync<TModel>(pagination, cancellationToken);
 
-        return new SuccessServiceResult<List<TModel>>(values);
+        return Success(values);
     }
 
     public async Task<ServiceResult<TEntity>> CreateAsync(DTO dto,
@@ -46,7 +46,7 @@ public class OrderService(IRepositoryWrapper RepositoryWrapper,
         ValidationResult validationResult = await dtoValidator.ValidateAsync(dto, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return new FluentValidationErrorServiceResult<TEntity>(validationResult);
+            return ValidationError(validationResult);
         }
 
         TEntity entity = mapper.Map<TEntity>(dto);
@@ -55,7 +55,7 @@ public class OrderService(IRepositoryWrapper RepositoryWrapper,
 
         await notificationService.ProduceAsync(NotificationKeys.OrderCreated, entity);
 
-        return new SuccessServiceResult<TEntity>(entity);
+        return Success(entity);
     }
 
     public async Task<ServiceResult> DeleteAsync(Guid id,
@@ -68,7 +68,7 @@ public class OrderService(IRepositoryWrapper RepositoryWrapper,
 
         await Repository.DeleteAsync(id, cancellationToken);
 
-        return new SuccessServiceResult();
+        return Success();
     }
 
     public async Task<ServiceResult> AcceptAsync(Guid userId, Guid id, CancellationToken cancellationToken)
@@ -76,7 +76,7 @@ public class OrderService(IRepositoryWrapper RepositoryWrapper,
         Guid? driverId = await RepositoryWrapper.User.GetDriverIdAsync(userId, cancellationToken);
         if (driverId is null || driverId == Guid.Empty)
         {
-            return new ForbiddenServiceResult<TEntity>();
+            return Forbidden();
         }
 
         if(!(await RepositoryWrapper.Notification.ExistsAsync(id, driverId.Value, cancellationToken)))
@@ -85,7 +85,7 @@ public class OrderService(IRepositoryWrapper RepositoryWrapper,
         }
 
         await Repository.SetAcceptedAsync(id, driverId.Value, cancellationToken);
-        return new SuccessServiceResult();
+        return Success();
     }
 
     public async Task<ServiceResult> DeliverAsync(Guid userId, Guid id, CancellationToken cancellationToken)
@@ -93,7 +93,7 @@ public class OrderService(IRepositoryWrapper RepositoryWrapper,
         Guid? driverId = await RepositoryWrapper.User.GetDriverIdAsync(userId, cancellationToken);
         if (driverId is null || driverId == Guid.Empty)
         {
-            return new ForbiddenServiceResult<TEntity>();
+            return Forbidden();
         }
 
         if (!(await Repository.ExistsAceeptedAsync(id, driverId.Value, cancellationToken)))
@@ -102,6 +102,6 @@ public class OrderService(IRepositoryWrapper RepositoryWrapper,
         }
 
         await Repository.SetDeliveredAsync(id, cancellationToken);
-        return new SuccessServiceResult();
+        return Success();
     }
 }

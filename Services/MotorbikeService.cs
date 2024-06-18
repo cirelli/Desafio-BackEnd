@@ -19,10 +19,10 @@ public class MotorbikeService(IRepositoryWrapper RepositoryWrapper,
 
         if (value is null)
         {
-            return NotFound<TModel>();
+            return NotFound();
         }
 
-        return new SuccessServiceResult<TModel>(value);
+        return Success(value);
     }
 
     public async Task<ServiceResult<List<TModel>>> GetAllAsync<TModel>(FilteredPagination<BaseFilter> pagination, CancellationToken cancellationToken)
@@ -32,7 +32,7 @@ public class MotorbikeService(IRepositoryWrapper RepositoryWrapper,
 
         List<TModel> values = await Repository.GetAllAsync<TModel>(pagination, cancellationToken);
 
-        return new SuccessServiceResult<List<TModel>>(values);
+        return Success(values);
     }
 
     public async Task<ServiceResult<TEntity>> CreateAsync(DTO dto, CancellationToken cancellationToken)
@@ -40,19 +40,19 @@ public class MotorbikeService(IRepositoryWrapper RepositoryWrapper,
         ValidationResult validationResult = await dtoValidator.ValidateAsync(dto, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return new FluentValidationErrorServiceResult<TEntity>(validationResult);
+            return ValidationError(validationResult);
         }
 
         if (await Repository.ExistsByPlateAsync(dto.Plate!, cancellationToken))
         {
-            return new ConflictServiceResult<TEntity>("Motorbike already registered!");
+            return Conflict("Motorbike already registered!");
         }
 
         TEntity entity = mapper.Map<TEntity>(dto);
         Repository.Create(entity);
         await RepositoryWrapper.SaveAsync(cancellationToken);
 
-        return new SuccessServiceResult<TEntity>(entity);
+        return Success(entity);
     }
 
     public async Task<ServiceResult> UpdatePlateAsync(Guid id, MotorbikePatchDTO dto, CancellationToken cancellationToken)
@@ -65,17 +65,17 @@ public class MotorbikeService(IRepositoryWrapper RepositoryWrapper,
         ValidationResult validationResult = await motorbikePatchValidator.ValidateAsync(dto, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return new FluentInvalidServiceResult(validationResult);
+            return ValidationError(validationResult);
         }
 
         if (await Repository.ExistsByPlateAsync(dto.Plate!, cancellationToken))
         {
-            return new ConflictServiceResult<TEntity>("Plate already in use!");
+            return Conflict("Plate already in use!");
         }
 
         await Repository.UpdatePlateAsync(id, dto.Plate!, cancellationToken);
 
-        return new SuccessServiceResult();
+        return Success();
     }
 
     public async Task<ServiceResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
@@ -86,6 +86,6 @@ public class MotorbikeService(IRepositoryWrapper RepositoryWrapper,
         }
 
         await Repository.DeleteAsync(id, cancellationToken);
-        return new SuccessServiceResult();
+        return Success();
     }
 }

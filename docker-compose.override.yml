@@ -6,6 +6,10 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
+      - DB_DATASOURCE=motorent.database
+      - DB_USER=postgres
+      - DB_PASSWORD=12345678
+      - DB_NAME=MotoRent
     ports:
       - "8080"
       - "8081"
@@ -15,5 +19,9 @@ services:
   messageconsumer:
     environment:
       - DOTNET_ENVIRONMENT=Development
+      - DB_DATASOURCE=motorent.database
+      - DB_USER=postgres
+      - DB_PASSWORD=12345678
+      - DB_NAME=MotoRent
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro

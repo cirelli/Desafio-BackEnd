@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Service = Services.DriverService;
+﻿using Service = Services.DriverService;
 using ViewModel = Domain.Dtos.DriverViewModel;
 
 namespace Api.Controllers;
@@ -7,7 +6,8 @@ namespace Api.Controllers;
 [ApiVersion("1")]
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
-public class DriverController(IMapper mapper) : BaseController
+public class DriverController(IMapper mapper)
+    : BaseController
 {
     [Authorize(Roles = "Admin")]
     [HttpGet]
@@ -15,7 +15,7 @@ public class DriverController(IMapper mapper) : BaseController
                                                             [FromQuery] FilteredPagination<DriverFilter> pagination,
                                                             CancellationToken cancellationToken)
     {
-        ServiceResult result = await driverService.GetAllAsync<ViewModel>(pagination, cancellationToken);
+        var result = await driverService.GetAllAsync<ViewModel>(pagination, cancellationToken);
         return HandleServiceResult(result);
     }
 
@@ -25,7 +25,7 @@ public class DriverController(IMapper mapper) : BaseController
                                                        Guid id,
                                                        CancellationToken cancellationToken)
     {
-        ServiceResult result = await driverService.GetByIdAsync<ViewModel>(id, cancellationToken);
+        var result = await driverService.GetByIdAsync<ViewModel>(id, cancellationToken);
         return HandleServiceResult(result);
     }
 
@@ -40,14 +40,14 @@ public class DriverController(IMapper mapper) : BaseController
             return BadRequest("Driver is null");
         }
 
-        ServiceResult result = await driverService.CreateAsync(driver, cancellationToken);
+        var result = await driverService.CreateAsync(driver, cancellationToken);
 
-        if (result is SuccessServiceResult<Driver> successResult)
+        if (result.IsSuccess)
         {
-            result = new CreatedServiceResult<Driver>("DriverById", successResult);
+            return CreatedAtRoute<ViewModel>(mapper, "DriverById", result.Value!);
         }
 
-        return HandleServiceResult<ViewModel>(mapper, result);
+        return HandleServiceResult(result);
     }
 
     [Authorize(Roles = "Admin")]
@@ -56,7 +56,7 @@ public class DriverController(IMapper mapper) : BaseController
                                             Guid id,
                                             CancellationToken cancellationToken)
     {
-        ServiceResult result = await driverService.DeleteAsync(id, cancellationToken);
+        var result = await driverService.DeleteAsync(id, cancellationToken);
         return HandleServiceResult(result);
     }
 }

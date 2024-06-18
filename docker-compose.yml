@@ -3,6 +3,10 @@ version: '3.4'
 services:
   api:
     image: ${DOCKER_REGISTRY-}api    
+    depends_on:
+      - motorent.database
+      - motorent.kafka
+      - messageconsumer
     container_name: motorent.api
     build:
       context: .
@@ -44,6 +48,9 @@ services:
 
   messageconsumer:
     image: ${DOCKER_REGISTRY-}messageconsumer
+    depends_on:
+      - motorent.kafka
+      - motorent.database
     build:
       context: .
       dockerfile: MessageConsumer/Dockerfile

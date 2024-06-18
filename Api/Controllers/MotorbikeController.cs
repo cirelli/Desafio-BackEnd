@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Service = Services.MotorbikeService;
+﻿using Service = Services.MotorbikeService;
 using ViewModel = Domain.Dtos.MotorbikeViewModel;
 
 namespace Api.Controllers;
@@ -7,7 +6,8 @@ namespace Api.Controllers;
 [ApiVersion("1")]
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
-public class MotorbikeController(IMapper mapper) : BaseController
+public class MotorbikeController(IMapper mapper)
+    : BaseController
 {
     [Authorize(Roles = "Admin")]
     [HttpGet]
@@ -15,7 +15,7 @@ public class MotorbikeController(IMapper mapper) : BaseController
                                                             [FromQuery] FilteredPagination<BaseFilter> pagination,
                                                             CancellationToken cancellationToken)
     {
-        ServiceResult<List<ViewModel>> result = await Service.GetAllAsync<ViewModel>(pagination, cancellationToken);
+        var result = await Service.GetAllAsync<ViewModel>(pagination, cancellationToken);
         return HandleServiceResult(result);
     }
 
@@ -25,7 +25,7 @@ public class MotorbikeController(IMapper mapper) : BaseController
                                                        Guid id,
                                                        CancellationToken cancellationToken)
     {
-        ServiceResult<ViewModel> result = await Service.GetByIdAsync<ViewModel>(id, cancellationToken);
+        var result = await Service.GetByIdAsync<ViewModel>(id, cancellationToken);
         return HandleServiceResult(result);
     }
 
@@ -40,14 +40,14 @@ public class MotorbikeController(IMapper mapper) : BaseController
             return BadRequest("Motorbike is null");
         }
 
-        ServiceResult result = await Service.CreateAsync(motorbike, cancellationToken);
+        var result = await Service.CreateAsync(motorbike, cancellationToken);
 
-        if (result is SuccessServiceResult<Motorbike> successResult)
+        if (result.IsSuccess)
         {
-            result = new CreatedServiceResult<Motorbike>("MotorbikeById", successResult);
+            return CreatedAtRoute<ViewModel>(mapper, "MotorbikeById", result.Value!);
         }
 
-        return HandleServiceResult<ViewModel>(mapper, result);
+        return HandleServiceResult(result);
     }
 
     [Authorize(Roles = "Admin")]
@@ -62,7 +62,7 @@ public class MotorbikeController(IMapper mapper) : BaseController
             return BadRequest("Motorbike is null");
         }
 
-        ServiceResult result = await Service.UpdatePlateAsync(id, motorbike, cancellationToken);
+        var result = await Service.UpdatePlateAsync(id, motorbike, cancellationToken);
         return HandleServiceResult(result);
     }
 
@@ -72,7 +72,7 @@ public class MotorbikeController(IMapper mapper) : BaseController
                                             Guid id,
                                             CancellationToken cancellationToken)
     {
-        ServiceResult result = await Service.DeleteAsync(id, cancellationToken);
+        var result = await Service.DeleteAsync(id, cancellationToken);
         return HandleServiceResult(result);
     }
 }

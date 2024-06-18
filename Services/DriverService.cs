@@ -22,10 +22,10 @@ public class DriverService(IRepositoryWrapper RepositoryWrapper,
 
         if (value is null)
         {
-            return NotFound<TModel>();
+            return NotFound();
         }
 
-        return new SuccessServiceResult<TModel>(value);
+        return Success(value);
     }
 
     public async Task<ServiceResult<List<TModel>>> GetAllAsync<TModel>(FilteredPagination<DriverFilter> pagination,
@@ -36,7 +36,7 @@ public class DriverService(IRepositoryWrapper RepositoryWrapper,
 
         List<TModel> values = await Repository.GetAllAsync<TModel>(pagination, cancellationToken);
 
-        return new SuccessServiceResult<List<TModel>>(values);
+        return Success(values);
     }
 
     public async Task<ServiceResult<TEntity>> CreateAsync(DTO dto,
@@ -45,17 +45,17 @@ public class DriverService(IRepositoryWrapper RepositoryWrapper,
         ValidationResult validationResult = await dtoValidator.ValidateAsync(dto, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return new FluentValidationErrorServiceResult<TEntity>(validationResult);
+            return ValidationError(validationResult);
         }
 
         if (await Repository.ExistsByCnpjAsync(dto.Cnpj!, cancellationToken))
         {
-            return new ConflictServiceResult<TEntity>("CNPJ already registered!");
+            return Conflict("CNPJ already registered!");
         }
 
         if (await Repository.ExistsByCnhAsync(dto.Cnh!, cancellationToken))
         {
-            return new ConflictServiceResult<TEntity>("CNH already registered!");
+            return Conflict("CNH already registered!");
         }
 
         TEntity entity = mapper.Map<TEntity>(dto);
@@ -71,11 +71,11 @@ public class DriverService(IRepositoryWrapper RepositoryWrapper,
             await userManager.AddToRoleAsync(user, "Driver");
 
             await RepositoryWrapper.CommitAsync(cancellationToken);
-            return new SuccessServiceResult<TEntity>(entity);
+            return Success(entity);
         }
 
         await RepositoryWrapper.RollbackAsync(cancellationToken);
-        return new ValidationErrorServiceResult<TEntity>(result.Errors.Select(q => new KeyValuePair<string, string>(nameof(dto.Password), q.Description)));
+        return ValidationError(result.Errors.Select(q => new KeyValuePair<string, string>(nameof(dto.Password), q.Description)));
     }
 
     public async Task<ServiceResult> DeleteAsync(Guid id,
@@ -91,6 +91,6 @@ public class DriverService(IRepositoryWrapper RepositoryWrapper,
         await userManager.DeleteAsync(user!);
         await Repository.DeleteAsync(id, cancellationToken);
 
-        return new SuccessServiceResult();
+        return Success();
     }
 }

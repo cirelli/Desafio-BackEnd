@@ -1,30 +1,25 @@
 ﻿namespace Api.Controllers;
 
-public abstract class BaseController : ControllerBase
+public abstract class BaseController
+    : ControllerBase
 {
-    protected ActionResult HandleServiceResult<T>(IMapper? mapper,
-                                                  ServiceResult result)
-        where T : class
+    protected ActionResult HandleServiceResult(IServiceResult result)
     {
-        return result switch
+        return (result.Result ?? result) switch
         {
-            IForbiddenServiceResult _ => Forbid(),
-            IInvalidServiceResult r => BadRequest(r.Message),
-            IValidationErrorServiceResult r => InvalidResult(r),
-            IConflictServiceResult r => Conflict(r.Message),
-            ICreatedServiceResult r => CreatedResult<T>(mapper, r),
+            IValuedSuccessServiceResult r => Ok(r.Value),
             SuccessServiceResult _ => NoContent(),
-            ISuccessServiceResult r => Ok(r.Value),
-            INotFoundServiceResult r => NotFound(r.Message),
-            IUnauthorizedServiceResult _ => Unauthorized(),
+            ForbiddenServiceResult _ => Forbid(),
+            InvalidServiceResult r => BadRequest(r.Message),
+            ValidationErrorServiceResult r => InvalidResult(r),
+            ConflictServiceResult r => Conflict(r.Message),
+            NotFoundServiceResult r => NotFound(r.Message),
+            UnauthorizedServiceResult _ => Unauthorized(),
             _ => throw new Exception("Unknown type of ServiceResult")
         };
     }
 
-    protected ActionResult HandleServiceResult(ServiceResult result)
-        => HandleServiceResult<object>(null, result);
-
-    private BadRequestObjectResult InvalidResult(IValidationErrorServiceResult result)
+    private BadRequestObjectResult InvalidResult(ValidationErrorServiceResult result)
     {
         foreach (var error in result.Errors)
         {
@@ -34,16 +29,11 @@ public abstract class BaseController : ControllerBase
         return BadRequest(ModelState);
     }
 
-    private CreatedAtRouteResult CreatedResult<T>(IMapper? mapper,
-                                                  ICreatedServiceResult result)
+    protected CreatedAtRouteResult CreatedAtRoute<T>(IMapper mapper, string? routeName, BaseEntity value)
     {
-        object? value = null;
-        if (result.Value is not null)
-        {
-            value = Map<T>(mapper, result.Value);
-        }
+        var mapedValue = Map<T>(mapper, value);
 
-        return CreatedAtRoute(result.RouteName, result.RouteValues, value);
+        return CreatedAtRoute(routeName, new { id = value.Id }, mapedValue);
     }
 
     private static object? Map<T>(IMapper? mapper, object value)

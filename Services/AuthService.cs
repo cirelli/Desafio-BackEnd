@@ -12,6 +12,7 @@ public class AuthService(SignInManager<User> signInManager,
                          IRepositoryWrapper repository,
                          IValidator<LoginRequest> loginValidator,
                          IOptions<TokenSettings> tokenSettings)
+    : BaseService
 {
     public async Task<ServiceResult<AuthorizedUserDTO>> LoginAsync(LoginRequest request,
                                                                    CancellationToken cancellationToken)
@@ -19,7 +20,7 @@ public class AuthService(SignInManager<User> signInManager,
         ValidationResult validationResult = await loginValidator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return new FluentValidationErrorServiceResult<AuthorizedUserDTO>(validationResult);
+            return ValidationError(validationResult);
         }
 
         SignInResult result = await signInManager.PasswordSignInAsync(request.Username, request.Password, false, false);
@@ -27,10 +28,10 @@ public class AuthService(SignInManager<User> signInManager,
         if (result.Succeeded)
         {
             AuthorizedUserDTO token = await CreateTokenAsync(request.Username, cancellationToken);
-            return new SuccessServiceResult<AuthorizedUserDTO>(token);
+            return Success(token);
         }
 
-        return new UnauthorizedServiceResult<AuthorizedUserDTO>();
+        return Unauthorized();
     }
 
     private async Task<AuthorizedUserDTO> CreateTokenAsync(string username,

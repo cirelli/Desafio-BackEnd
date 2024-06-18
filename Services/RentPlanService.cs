@@ -19,10 +19,10 @@ public class RentPlanService(IRepositoryWrapper RepositoryWrapper,
 
         if (value is null)
         {
-            return NotFound<TModel>();
+            return NotFound();
         }
 
-        return new SuccessServiceResult<TModel>(value);
+        return Success(value);
     }
 
     public async Task<ServiceResult<List<TModel>>> GetAllAsync<TModel>(Pagination pagination,
@@ -33,7 +33,7 @@ public class RentPlanService(IRepositoryWrapper RepositoryWrapper,
 
         List<TModel> values = await Repository.GetAllAsync<TModel>(pagination, cancellationToken);
 
-        return new SuccessServiceResult<List<TModel>>(values);
+        return Success(values);
     }
 
     public async Task<ServiceResult<TEntity>> CreateAsync(DTO dto,
@@ -42,14 +42,14 @@ public class RentPlanService(IRepositoryWrapper RepositoryWrapper,
         ValidationResult validationResult = await dtoValidator.ValidateAsync(dto, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return new FluentValidationErrorServiceResult<TEntity>(validationResult);
+            return ValidationError(validationResult);
         }
 
         TEntity entity = mapper.Map<TEntity>(dto);
         Repository.Create(entity);
         await RepositoryWrapper.SaveAsync(cancellationToken);
 
-        return new SuccessServiceResult<TEntity>(entity);
+        return Success(entity);
     }
 
     public async Task<ServiceResult> DeleteAsync(Guid id,
@@ -62,6 +62,6 @@ public class RentPlanService(IRepositoryWrapper RepositoryWrapper,
 
         await Repository.DeleteAsync(id, cancellationToken);
 
-        return new SuccessServiceResult();
+        return Success();
     }
 }

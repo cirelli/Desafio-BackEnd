@@ -14,7 +14,7 @@ public record CreatedServiceResult<T>
       ICreatedServiceResult
     where T : BaseEntity
 {
-    public CreatedServiceResult(string createdRouteName, SuccessServiceResult<T> result)
+    public CreatedServiceResult(string createdRouteName, ServiceResult<T> result)
         : base(result.Value)
     {
         RouteName = createdRouteName;
@@ -24,4 +24,9 @@ public record CreatedServiceResult<T>
     public string RouteName { get; }
     public object RouteValues { get; }
     object? ICreatedServiceResult.Value { get => Value; }
+
+    public static CreatedServiceResult<T> Create(string createdRouteName, ServiceResult<T> result)
+    {
+        return new CreatedServiceResult<T>(createdRouteName, result);
+    }
 }

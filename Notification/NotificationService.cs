@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Xml.Linq;
 using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 using Microsoft.Extensions.Options;
@@ -38,7 +39,7 @@ public class NotificationService(IOptions<KafkaSettings> settings)
         producer.Flush(TimeSpan.FromSeconds(10));
     }
 
-    public Task Consume(Func<string, string, Task> messageReceivedAction, CancellationToken cancellationToken)
+    public async Task Consume(Func<string, string, Task> messageReceivedAction, CancellationToken cancellationToken)
     {
         var consumerConfig = new ConsumerConfig(config)
         {
@@ -49,6 +50,7 @@ public class NotificationService(IOptions<KafkaSettings> settings)
 
         using var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
 
+        await CreateTopicMaybeAsync(Topic);
         consumer.Subscribe(Topic);
         try
         {
@@ -66,8 +68,6 @@ public class NotificationService(IOptions<KafkaSettings> settings)
         {
             consumer.Close();
         }
-
-        return Task.CompletedTask;
     }
 
     private async Task CreateTopicMaybeAsync(string name)

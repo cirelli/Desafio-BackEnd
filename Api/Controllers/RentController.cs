@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Service = Services.RentService;
+﻿using Service = Services.RentService;
 using ViewModel = Domain.Dtos.RentViewModel;
 
 namespace Api.Controllers;
@@ -7,7 +6,8 @@ namespace Api.Controllers;
 [ApiVersion("1")]
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
-public class RentController(IMapper mapper) : BaseController
+public class RentController(IMapper mapper)
+    : BaseController
 {
     [Authorize(Roles = "Admin, Driver")]
     [HttpGet]
@@ -15,7 +15,7 @@ public class RentController(IMapper mapper) : BaseController
                                                             [FromQuery] Pagination pagination,
                                                             CancellationToken cancellationToken)
     {
-        ServiceResult result = await service.GetAllAsync<ViewModel>(pagination, cancellationToken);
+        var result = await service.GetAllAsync<ViewModel>(pagination, cancellationToken);
         return HandleServiceResult(result);
     }
 
@@ -25,7 +25,7 @@ public class RentController(IMapper mapper) : BaseController
                                                        Guid id,
                                                        CancellationToken cancellationToken)
     {
-        ServiceResult result = await service.GetByIdAsync<ViewModel>(id, cancellationToken);
+        var result = await service.GetByIdAsync<ViewModel>(id, cancellationToken);
         return HandleServiceResult(result);
     }
 
@@ -41,14 +41,14 @@ public class RentController(IMapper mapper) : BaseController
             return BadRequest("Invalid body!");
         }
 
-        ServiceResult result = await service.CreateAsync(currentUser.Id, dto, cancellationToken);
+        var result = await service.CreateAsync(currentUser.Id, dto, cancellationToken);
 
-        if (result is SuccessServiceResult<Rent> successResult)
+        if (result.IsSuccess)
         {
-            result = new CreatedServiceResult<Rent>("RentById", successResult);
+            return CreatedAtRoute<ViewModel>(mapper, "RentById", result.Value!);
         }
 
-        return HandleServiceResult<ViewModel>(mapper, result);
+        return HandleServiceResult(result);
     }
 
     [Authorize(Roles = "Driver")]
@@ -64,7 +64,7 @@ public class RentController(IMapper mapper) : BaseController
             return BadRequest("Invalid body!");
         }
 
-        ServiceResult result = await service.SetEndDateAsync(currentUser.Id, id, dto, cancellationToken);
+        var result = await service.SetEndDateAsync(currentUser.Id, id, dto, cancellationToken);
         return HandleServiceResult(result);
     }
 
@@ -74,7 +74,7 @@ public class RentController(IMapper mapper) : BaseController
                                             Guid id,
                                             CancellationToken cancellationToken)
     {
-        ServiceResult result = await rentPlanService.DeleteAsync(id, cancellationToken);
+        var result = await rentPlanService.DeleteAsync(id, cancellationToken);
         return HandleServiceResult(result);
     }
 }

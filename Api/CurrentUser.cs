@@ -1,3 +1,3 @@
 ﻿namespace Api;
 
-public record CurrentUser (Guid Id, string Name);
+public record CurrentUser(Guid Id, string Name);
